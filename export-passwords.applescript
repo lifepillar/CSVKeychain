@@ -41,7 +41,6 @@ on chooseKeychain()
 	{theKeychainName as text, theKeychain}
 end chooseKeychain
 
-
 on setUIScripting(newStatus)
 	tell application "System Events"
 		set {currentStatus, UI elements enabled} to {UI elements enabled, newStatus}
@@ -93,29 +92,9 @@ on allowSecurityAccess()
 	end tell
 end allowSecurityAccess
 
-on confirmationDialog(message)
-	tell me
-		activate
-		try
-			display dialog message buttons {"Cancel", "OK"} default button "OK" cancel button "Cancel" with icon note
-		on error number -128
-			return false
-		end try
-	end tell
-	return true
-end confirmationDialog
-
 on criticalDialog(msg)
 	display alert Â
 		"A fatal error has occurred" message "This script will be terminated because the following error has occurred: " & return & return & msg as critical Â
 		buttons {"OK"} default button 1 Â
 		giving up after 30
 end criticalDialog
-
-on exprif(condition, thenexpr, elseexpr)
-	if condition then
-		thenexpr
-	else
-		elseexpr
-	end if
-end exprif
