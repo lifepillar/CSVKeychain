@@ -2,68 +2,30 @@ set VOLNAME to "Passwords" -- Name of the encrypted disk image that will contain
 set DISKDIR to path to documents folder from user domain as alias without folder creation
 set DISKSIZE to 40 -- Disk image size in Megabytes
 
--- Choose keychain
-try
+try -- to choose keychain
 	set {keychainName, keychainPath} to chooseKeychain()
 on error number -128 -- cancelled
 	return
 end try
 
--- Enable access for assistive devices (it may require a password)
-try
+try -- to enable access for assistive devices (it may require a password)
 	set oldStatusUI to setUIScripting(true)
 on error errMsg
 	criticalDialog("Could not enable UI Scripting: " & errMsg)
 	return
 end try
 
--- Create an encrypted disk image or attach it if it exists
-set imagepath to (POSIX path of DISKDIR) & VOLNAME
 try
-	(POSIX file (imagepath & ".sparseimage")) as alias
-	try
-		do shell script "hdiutil attach " & imagepath & ".sparseimage -mount required"
-	on error errMsg
-		criticalDialog("Could not attach disk image: " & errMsg)
-		setUIScripting(oldStatusUI)
-		return
-	end try
-on error -- Disk image does not exist
-	try
-		do shell script "hdiutil create -quiet -size " & (DISKSIZE as text) & "m -fs HFS+J -encryption AES-256 -agentpass -volname " & VOLNAME & " -type SPARSE -attach " & imagepath
-	on error errMsg
-		criticalDialog("Could not create disk image: " & errMsg)
-		setUIScripting(oldStatusUI)
-		return
-	end try
-end try
-
--- Unlock keychain (it may prompt for the keychain password)
-try
-	do shell script "security -q unlock-keychain -u " & POSIX path of theKeychain
+	createAndAttachDiskImage(DISKDIR, VOLNAME, DISKSIZE)
+	unlockKeychain(keychainPath)
+	dumpKeychain(keychainPath, Â
+		"/Volumes/" & VOLNAME & "/" & keychainName & "-dump.txt")
 on error errMsg
-	criticalDialog("Could not unlock the keychain: " & errMsg)
-	setUIScripting(oldStatusUI)
-	return
+	criticalDialog(errMsg)
 end try
 
--- Run security in the background and redirect output into the encrypted disk image
-do shell script "security -q dump-keychain -d " & POSIX path of theKeychain & " &>/Volumes/" & VOLNAME & "/keychain-dump.txt &"
-delay 3 -- Wait for SecurityAgent to start
-
--- Use access for assistive devices to automatically dispose of the dialogs
-repeat
-	try
-		allowSecurityAccess()
-		delay 0.5 -- Wait for the next SecurityAgent process
-	on error
-		exit repeat -- Assumes that security is over
-	end try
-end repeat
-
--- Revert the status of UI scripting (it may require a password)
-try
-	set oldStatusUI to setUIScripting(oldStatusUI)
+try -- to revert the status of UI scripting (it may require a password)
+	setUIScripting(oldStatusUI)
 on error errMsg
 	criticalDialog("Could not revert the status of UI Scripting: " & errMsg)
 	return
@@ -75,7 +37,11 @@ end try
 display dialog "Finished!" buttons {"Great!"} default button 1
 return
 
+
 ----------------------------------------------------------------------------
+-- Auxiliary handlers
+----------------------------------------------------------------------------
+
 -- Ask for the keychain to be exported
 on chooseKeychain()
 	set theKeychain to choose file with prompt Â
@@ -88,13 +54,6 @@ on chooseKeychain()
 	{theKeychainName as text, theKeychain}
 end chooseKeychain
 
-on allowSecurityAccess()
-	tell application "System Events"
-		tell process "SecurityAgent"
-			click button "Allow" of group 1 of window 1
-		end tell
-	end tell
-end allowSecurityAccess
 
 on setUIScripting(newStatus)
 	tell application "System Events"
@@ -102,6 +61,46 @@ on setUIScripting(newStatus)
 	end tell
 	return currentStatus
 end setUIScripting
+
+on createAndAttachDiskImage(thePath, theName, theSize)
+	set imagepath to (POSIX path of thePath) & theName & ".sparseimage"
+	try -- to attach an existing disk image
+		(POSIX file imagepath) as alias
+		do shell script "hdiutil attach " & imagepath & " -mount required"
+	on error number -1700 -- Disk image does not exist, create it
+		do shell script "hdiutil create -quiet -size " & (theSize as text) & Â
+			"m -fs HFS+J -encryption AES-256 -agentpass -volname " & theName & Â
+			" -type SPARSE -attach " & imagepath
+	end try
+end createAndAttachDiskImage
+
+on unlockKeychain(theKeychain)
+	do shell script "security -q unlock-keychain -u " & POSIX path of theKeychain
+end unlockKeychain
+
+on dumpKeychain(theKeychain, theOutPathname)
+	-- Run security in the background and redirect the output to a file
+	do shell script "security -q dump-keychain -d " & POSIX path of theKeychain & " &>" & theOutPathname & " &"
+	delay 3 -- Wait for SecurityAgent to start
+	
+	-- Use access for assistive devices to automatically dispose of SecurityAgent's dialogs
+	repeat
+		try
+			allowSecurityAccess()
+			delay 0.5 -- Wait for the next SecurityAgent process
+		on error
+			exit repeat -- Assumes that security is over
+		end try
+	end repeat
+end dumpKeychain
+
+on allowSecurityAccess()
+	tell application "System Events"
+		tell process "SecurityAgent"
+			click button "Allow" of group 1 of window 1
+		end tell
+	end tell
+end allowSecurityAccess
 
 on confirmationDialog(message)
 	tell me
@@ -117,7 +116,7 @@ end confirmationDialog
 
 on criticalDialog(msg)
 	display alert Â
-		"A fatal error has occurred" message msg as critical Â
+		"A fatal error has occurred" message "This script will be terminated because the following error has occurred: " & return & return & msg as critical Â
 		buttons {"OK"} default button 1 Â
 		giving up after 30
 end criticalDialog
