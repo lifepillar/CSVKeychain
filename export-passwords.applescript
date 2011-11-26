@@ -2,14 +2,16 @@ set VOLNAME to "Passwords" -- Name of the encrypted disk image that will contain
 set DISKDIR to path to documents folder from user domain as alias without folder creation
 set DISKSIZE to 40 -- Disk image size in Megabytes
 
+-- Choose keychain
 try
-	set {keychainName, kechainPath} to chooseKeychain()
+	set {keychainName, keychainPath} to chooseKeychain()
 on error number -128 -- cancelled
 	return
 end try
+
 -- Enable access for assistive devices (it may require a password)
 try
-	set oldStatusUI to setUIScripting(true, false)
+	set oldStatusUI to setUIScripting(true)
 on error errMsg
 	criticalDialog("Could not enable UI Scripting: " & errMsg)
 	return
@@ -23,7 +25,7 @@ try
 		do shell script "hdiutil attach " & imagepath & ".sparseimage -mount required"
 	on error errMsg
 		criticalDialog("Could not attach disk image: " & errMsg)
-		setUIScripting(oldStatusUI, false)
+		setUIScripting(oldStatusUI)
 		return
 	end try
 on error -- Disk image does not exist
@@ -31,7 +33,7 @@ on error -- Disk image does not exist
 		do shell script "hdiutil create -quiet -size " & (DISKSIZE as text) & "m -fs HFS+J -encryption AES-256 -agentpass -volname " & VOLNAME & " -type SPARSE -attach " & imagepath
 	on error errMsg
 		criticalDialog("Could not create disk image: " & errMsg)
-		setUIScripting(oldStatusUI, false)
+		setUIScripting(oldStatusUI)
 		return
 	end try
 end try
@@ -41,7 +43,7 @@ try
 	do shell script "security -q unlock-keychain -u " & POSIX path of theKeychain
 on error errMsg
 	criticalDialog("Could not unlock the keychain: " & errMsg)
-	setUIScripting(oldStatusUI, false)
+	setUIScripting(oldStatusUI)
 	return
 end try
 
@@ -61,7 +63,7 @@ end repeat
 
 -- Revert the status of UI scripting (it may require a password)
 try
-	set oldStatusUI to setUIScripting(oldStatusUI, false)
+	set oldStatusUI to setUIScripting(oldStatusUI)
 on error errMsg
 	criticalDialog("Could not revert the status of UI Scripting: " & errMsg)
 	return
@@ -94,15 +96,10 @@ on allowSecurityAccess()
 	end tell
 end allowSecurityAccess
 
-on setUIScripting(newStatus, confirm)
+on setUIScripting(newStatus)
 	tell application "System Events" to set currentStatus to UI elements enabled
 	if currentStatus is not newStatus then
-		if confirm then
-			set confirmed to confirmationDialog(exprif(currentStatus, "Disable", "Enable") & "UI Scripting now? (You may be asked to enter your password.)")
-		else
-			set confirmed to true
-		end if
-		if confirmed then tell application "System Events" to set UI elements enabled to newStatus
+		tell application "System Events" to set UI elements enabled to newStatus
 	end if
 	return currentStatus
 end setUIScripting
