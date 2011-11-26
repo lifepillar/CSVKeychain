@@ -8,26 +8,13 @@ on error number -128 -- cancelled
 	return
 end try
 
-try -- to enable access for assistive devices (it may require a password)
-	set oldStatusUI to setUIScripting(true)
-on error errMsg
-	criticalDialog("Could not enable UI Scripting: " & errMsg)
-	return
-end try
-
-try
+try -- to dump keychain data into an encrypted disk image
 	createAndAttachDiskImage(DISKDIR, VOLNAME, DISKSIZE)
 	unlockKeychain(keychainPath)
 	dumpKeychain(keychainPath, Â
 		"/Volumes/" & VOLNAME & "/" & keychainName & "-dump.txt")
 on error errMsg
 	criticalDialog(errMsg)
-end try
-
-try -- to revert the status of UI scripting (it may require a password)
-	setUIScripting(oldStatusUI)
-on error errMsg
-	criticalDialog("Could not revert the status of UI Scripting: " & errMsg)
 	return
 end try
 
@@ -79,6 +66,8 @@ on unlockKeychain(theKeychain)
 end unlockKeychain
 
 on dumpKeychain(theKeychain, theOutPathname)
+	set oldStatusUI to setUIScripting(true)
+	
 	-- Run security in the background and redirect the output to a file
 	do shell script "security -q dump-keychain -d " & POSIX path of theKeychain & " &>" & theOutPathname & " &"
 	delay 3 -- Wait for SecurityAgent to start
@@ -92,6 +81,8 @@ on dumpKeychain(theKeychain, theOutPathname)
 			exit repeat -- Assumes that security is over
 		end try
 	end repeat
+	
+	setUIScripting(oldStatusUI)
 end dumpKeychain
 
 on allowSecurityAccess()
