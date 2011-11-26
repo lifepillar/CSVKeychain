@@ -2,20 +2,11 @@ set VOLNAME to "Passwords" -- Name of the encrypted disk image that will contain
 set DISKDIR to path to documents folder from user domain as alias without folder creation
 set DISKSIZE to 40 -- Disk image size in Megabytes
 
--- Ask for the keychain to be exported
 try
-	set theKeychain to choose file with prompt Â
-		"Please select the keychain to be exported:" of type {"com.apple.keychain"} Â
-		default location (path to keychain folder from user domain) Â
-		without invisibles, multiple selections allowed and showing package contents
-	set {tid, AppleScript's text item delimiters} to {AppleScript's text item delimiters, ":"}
-	set theKeychainName to (characters 1 thru -10 of the last item of the text items of (theKeychain as text))
-	set AppleScript's text item delimiters to tid
-	set theKeychainName to theKeychainName as text
+	set {keychainName, kechainPath} to chooseKeychain()
 on error number -128 -- cancelled
 	return
 end try
-
 -- Enable access for assistive devices (it may require a password)
 try
 	set oldStatusUI to setUIScripting(true, false)
@@ -81,6 +72,19 @@ end try
 -- TODO: export the timestamp field and use it for synchronizing passwords (!)
 display dialog "Finished!" buttons {"Great!"} default button 1
 return
+
+----------------------------------------------------------------------------
+-- Ask for the keychain to be exported
+on chooseKeychain()
+	set theKeychain to choose file with prompt Â
+		"Please select the keychain to be exported:" of type {"com.apple.keychain"} Â
+		default location (path to keychain folder from user domain) Â
+		without invisibles, multiple selections allowed and showing package contents
+	set {tid, AppleScript's text item delimiters} to {AppleScript's text item delimiters, ":"}
+	set theKeychainName to (characters 1 thru -10 of the last item of the text items of (theKeychain as text))
+	set AppleScript's text item delimiters to tid
+	{theKeychainName as text, theKeychain}
+end chooseKeychain
 
 on allowSecurityAccess()
 	tell application "System Events"
