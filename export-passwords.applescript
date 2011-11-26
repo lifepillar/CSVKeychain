@@ -97,10 +97,9 @@ on allowSecurityAccess()
 end allowSecurityAccess
 
 on setUIScripting(newStatus)
-	tell application "System Events" to set currentStatus to UI elements enabled
-	if currentStatus is not newStatus then
-		tell application "System Events" to set UI elements enabled to newStatus
-	end if
+	tell application "System Events"
+		set {currentStatus, UI elements enabled} to {UI elements enabled, newStatus}
+	end tell
 	return currentStatus
 end setUIScripting
 
