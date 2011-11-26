@@ -1,42 +1,68 @@
-set VOLNAME to "Passwords" -- Name of the disk image
+set VOLNAME to "Passwords" -- Name of the encrypted disk image that will contain the exported keychain
+set DISKDIR to path to documents folder from user domain as alias without folder creation
+set DISKSIZE to 40 -- Disk image size in Megabytes
 
--- [TODO]: ask for the keychain to be exported
+-- Ask for the keychain to be exported
+try
+	set theKeychain to choose file with prompt Â
+		"Please select the keychain to be exported:" of type {"com.apple.keychain"} Â
+		default location (path to keychain folder from user domain) Â
+		without invisibles, multiple selections allowed and showing package contents
+	set {tid, AppleScript's text item delimiters} to {AppleScript's text item delimiters, ":"}
+	set theKeychainName to (characters 1 thru -10 of the last item of the text items of (theKeychain as text))
+	set AppleScript's text item delimiters to tid
+	set theKeychainName to theKeychainName as text
+on error number -128 -- cancelled
+	return
+end try
 
 -- Enable access for assistive devices (it may require a password)
 try
 	set oldStatusUI to setUIScripting(true, false)
 on error errMsg
-	display dialog "Could not enable UI Scripting: " & errMsg
+	criticalDialog("Could not enable UI Scripting: " & errMsg)
 	return
 end try
 
--- Create an encrypted disk image
-set imagepath to (POSIX path of (path to downloads folder)) & VOLNAME
+-- Create an encrypted disk image or attach it if it exists
+set imagepath to (POSIX path of DISKDIR) & VOLNAME
 try
-	do shell script "hdiutil create -quiet -size 40m -fs HFS+J -encryption AES-256 -agentpass -volname " & VOLNAME & " -type SPARSE -attach " & imagepath
+	(POSIX file (imagepath & ".sparseimage")) as alias
+	try
+		do shell script "hdiutil attach " & imagepath & ".sparseimage -mount required"
+	on error errMsg
+		criticalDialog("Could not attach disk image: " & errMsg)
+		setUIScripting(oldStatusUI, false)
+		return
+	end try
+on error -- Disk image does not exist
+	try
+		do shell script "hdiutil create -quiet -size " & (DISKSIZE as text) & "m -fs HFS+J -encryption AES-256 -agentpass -volname " & VOLNAME & " -type SPARSE -attach " & imagepath
+	on error errMsg
+		criticalDialog("Could not create disk image: " & errMsg)
+		setUIScripting(oldStatusUI, false)
+		return
+	end try
+end try
+
+-- Unlock keychain (it may prompt for the keychain password)
+try
+	do shell script "security -q unlock-keychain -u " & POSIX path of theKeychain
 on error errMsg
-	display dialog "Could not create disk image: " & errMsg
+	criticalDialog("Could not unlock the keychain: " & errMsg)
 	setUIScripting(oldStatusUI, false)
 	return
 end try
 
--- Unlock keychain
-try
-	do shell script "security -q unlock-keychain -u /Users/nicola/Library/Keychains/test.keychain"
-on error errMsg
-	display dialog errMsg
-	return
-end try
-
 -- Run security in the background and redirect output into the encrypted disk image
-do shell script "security -q dump-keychain -d /Users/nicola/Library/Keychains/test.keychain &>/Volumes/" & VOLNAME & "/passwords.txt &"
-delay 5 -- Wait for SecurityAgent to start
+do shell script "security -q dump-keychain -d " & POSIX path of theKeychain & " &>/Volumes/" & VOLNAME & "/keychain-dump.txt &"
+delay 3 -- Wait for SecurityAgent to start
 
 -- Use access for assistive devices to automatically dispose of the dialogs
 repeat
 	try
 		allowSecurityAccess()
-		delay 1 -- Wait for the next SecurityAgent process
+		delay 0.5 -- Wait for the next SecurityAgent process
 	on error
 		exit repeat -- Assumes that security is over
 	end try
@@ -46,7 +72,7 @@ end repeat
 try
 	set oldStatusUI to setUIScripting(oldStatusUI, false)
 on error errMsg
-	display dialog "Could not enable UI Scripting: " & errMsg
+	criticalDialog("Could not revert the status of UI Scripting: " & errMsg)
 	return
 end try
 
@@ -54,11 +80,11 @@ end try
 
 -- TODO: export the timestamp field and use it for synchronizing passwords (!)
 display dialog "Finished!" buttons {"Great!"} default button 1
+return
 
 on allowSecurityAccess()
 	tell application "System Events"
 		tell process "SecurityAgent"
-			--set theElements to UI elements of group 1 of window 1
 			click button "Allow" of group 1 of window 1
 		end tell
 	end tell
@@ -88,6 +114,13 @@ on confirmationDialog(message)
 	end tell
 	return true
 end confirmationDialog
+
+on criticalDialog(msg)
+	display alert Â
+		"A fatal error has occurred" message msg as critical Â
+		buttons {"OK"} default button 1 Â
+		giving up after 30
+end criticalDialog
 
 on exprif(condition, thenexpr, elseexpr)
 	if condition then
