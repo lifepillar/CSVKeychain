@@ -165,7 +165,7 @@ on PasswordItemsFromKeychainDump(source)
 					else -- internet password
 						set server to extract(rec, "srvr")
 						set thePath to extract(rec, "path")
-						set protocol to extract(rec, "ptcl") -- This is either a four-letter code or 0x00000000
+						set protocol to extract(rec, "ptcl") -- Either a four-letter code or 0x00000000
 						if protocol is not "0" then
 							set protocol to decodeProtocol(protocol) & "://"
 						else
