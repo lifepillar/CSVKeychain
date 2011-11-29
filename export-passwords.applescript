@@ -149,37 +149,40 @@ on PasswordItemsFromKeychainDump(source)
 		repeat with ki in keychainItems
 			if ki contains "class: \"genp\"" or ki contains "class: \"inet\"" then
 				set rec to the rest of split(ki, "attributes:") as text
-				set label to extract(rec, "0x00000007")
-				set account to extract(rec, "acct")
-				set passwd to extract(rec, "data")
-				set comment to extract(rec, "icmt")
-				set creationDate to extract(rec, "cdat")
-				set modificationDate to extract(rec, "mdat")
-				set descr to extract(rec, "desc")
 				set type to extract(rec, "type")
-				if ki contains "class: \"genp\"" then
-					set service to extract(rec, "svce")
-					set {domain, authtype} to {"", ""} -- Not meaningful for generic passwords
-				else -- internet password
-					set server to extract(rec, "srvr")
-					set thePath to extract(rec, "path")
-					set protocol to extract(rec, "ptcl") -- This is either a four-letter code or 0x00000000
-					if protocol is not "0" then
-						set protocol to decodeProtocol(protocol) & "://"
-					else
-						set protocol to ""
+				if type is not "note" or EXPORT_SECURE_NOTES then
+					set label to extract(rec, "0x00000007")
+					set account to extract(rec, "acct")
+					set passwd to extract(rec, "data")
+					if type is "note" then set passwd to decodeNote(passwd)
+					set comment to extract(rec, "icmt")
+					set creationDate to extract(rec, "cdat")
+					set modificationDate to extract(rec, "mdat")
+					set descr to extract(rec, "desc")
+					if ki contains "class: \"genp\"" then
+						set service to extract(rec, "svce")
+						set {domain, authtype} to {"", ""} -- Not meaningful for generic passwords
+					else -- internet password
+						set server to extract(rec, "srvr")
+						set thePath to extract(rec, "path")
+						set protocol to extract(rec, "ptcl") -- This is either a four-letter code or 0x00000000
+						if protocol is not "0" then
+							set protocol to decodeProtocol(protocol) & "://"
+						else
+							set protocol to ""
+						end if
+						set thePort to extract(rec, "port")
+						if thePort is not "" then set thePort to ":" & thePort
+						set service to protocol & server & thePath & thePort
+						set domain to extract(rec, "sdmn")
+						-- Possible authentication types are:
+						-- 'ntlm' (NTLM), 'msna' (MSN), 'dpaa' (DPA), 'rpaa' (RPA), 'http', (HTTP Basic),
+						-- 'httd' (HTTP Digest), 'form' (HTML Form), 'dflt' (Default), '0' (any)
+						set authtype to extract(rec, "atyp")
 					end if
-					set thePort to extract(rec, "port")
-					if thePort is not "" then set thePort to ":" & thePort
-					set service to protocol & server & thePath & thePort
-					set domain to extract(rec, "sdmn")
-					-- Possible authentication types are:
-					-- 'ntlm' (NTLM), 'msna' (MSN), 'dpaa' (DPA), 'rpaa' (RPA), 'http', (HTTP Basic),
-					-- 'httd' (HTTP Digest), 'form' (HTML Form), 'dflt' (Default), '0' (any)
-					set authtype to extract(rec, "atyp")
+					set the end of passwordItems to Â
+						{service, account, passwd, label, comment, creationDate, modificationDate, descr, type, domain, authtype}
 				end if
-				set the end of passwordItems to Â
-					{service, account, passwd, label, comment, creationDate, modificationDate, descr, type, domain, authtype}
 			end if
 		end repeat
 		return my passwordItems
@@ -197,7 +200,7 @@ on PasswordItemsFromKeychainDump(source)
 			end if
 			set theValue to textBetween(theRecord, theKey, LF) as text
 			if theValue starts with "0x" then
-				decode(the first item of split(theValue, {SP, LF}), type)
+				set theValue to decode(the first item of split(theValue, {SP, LF}), type)
 			else
 				cleanup(theValue)
 			end if
@@ -316,6 +319,17 @@ on split(theText, theDelim)
 	set AppleScript's text item delimiters to tid
 	return theResult
 end split
+
+on join(theList, theDelim)
+	set {tid, AppleScript's text item delimiters} to {AppleScript's text item delimiters, theDelim}
+	set theResult to theList as text
+	set AppleScript's text item delimiters to tid
+	return theResult
+end join
+
+on replace(theText, old, new)
+	join(split(theText, old), new)
+end replace
 
 -- Returns the list of occurrences in the given text
 -- which are enclosed by the given (distinct) delimiters
