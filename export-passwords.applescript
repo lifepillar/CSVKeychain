@@ -288,6 +288,10 @@ on unquote(x)
 	end try
 end unquote
 
+on zap(x)
+	replace(x, string id 0, "")
+end zap
+
 on exprif(cond, _then, _else)
 	if cond then
 		_then
