@@ -1,7 +1,7 @@
-global VOLNAME, DISKDIR, DISKSIZE
-set VOLNAME to "Passwords" -- Name of the encrypted disk image that will contain the exported keychain
-set DISKDIR to path to documents folder from user domain as alias without folder creation
-set DISKSIZE to 40 -- Disk image size in MB
+property VOLNAME : "Passwords" -- Name of the encrypted disk image that will contain the exported keychain
+property DISKDIR : path to documents folder from user domain as alias without folder creation
+property DISKSIZE : 40 -- Disk image size in MB
+property EXPORT_SECURE_NOTES : false
 
 try
 	exportKeychain()
