@@ -1,7 +1,7 @@
 global VOLNAME, DISKDIR, DISKSIZE
 set VOLNAME to "Passwords" -- Name of the encrypted disk image that will contain the exported keychain
 set DISKDIR to path to documents folder from user domain as alias without folder creation
-set DISKSIZE to 40 -- Disk image size in Megabytes
+set DISKSIZE to 40 -- Disk image size in MB
 
 try
 	exportKeychain()
@@ -87,15 +87,20 @@ on dumpKeychainWithPasswords(theKeychain, dumpPath)
 	
 	-- Run security in the background and redirect the output to a file
 	do shell script "security -q dump-keychain -d " & POSIX path of theKeychain & " &>" & dumpPath & " &"
-	delay 3 -- Wait for SecurityAgent to start
+	delay 0.5 -- Wait a bit for SecurityAgent to start
 	
 	-- Use access for assistive devices to automatically dispose of SecurityAgent's dialogs
 	repeat
 		try
 			allowSecurityAccess()
-			delay 0.5 -- Wait for the next SecurityAgent process
+			delay 0.1 -- Wait for the next SecurityAgent process
 		on error
-			exit repeat -- Assumes that security is over
+			try -- to wait a bit if security is still running
+				do shell script "ps -x -o comm | grep security" -- Exit code 1 if grep fails to match
+				delay 1
+			on error
+				exit repeat
+			end try
 		end try
 	end repeat
 	
