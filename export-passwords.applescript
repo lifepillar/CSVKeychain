@@ -223,8 +223,10 @@ on PasswordItemsFromKeychainDump(source)
 		
 		on decode(x, type)
 			set hexdata to text 3 thru -1 of x -- Get rid of "0x"
-			if type is in {"blob", "timedate"} then
+			if type is "blob" then
 				hexToUTF8(hexdata)
+			else if type is "timedate" then
+				zap(hexToUTF8(hexdata)) -- timestamps end with \000
 			else if type starts with "uint" then
 				hexToDec(hexdata)
 			else
