@@ -1,7 +1,7 @@
 property VOLNAME : "Passwords" -- Name of the encrypted disk image that will contain the exported keychain
 property DISKDIR : path to documents folder from user domain as alias without folder creation
 property DISKSIZE : 40 -- Disk image size in MB
-property EXPORT_SECURE_NOTES : false
+property EXPORT_SECURE_NOTES : true
 
 try
 	exportKeychain()
