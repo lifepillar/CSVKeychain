@@ -10,7 +10,6 @@ on error errMsg number errNum
 	return
 end try
 
--- TODO: export the timestamp field and use it for synchronizing passwords (!)
 display dialog "Finished!" buttons {"Great!"} default button 1
 return
 
@@ -144,7 +143,7 @@ end PasswordItemsFromCSV
 
 on PasswordItemsFromKeychainDump(source)
 	script Parser
-		property passwordItems : {{"Label", "Account", "Password"}} -- Header
+		property passwordItems : {{"Label", "Account", "Password", "Created", "Modified"}} -- Header
 		
 		set keychainItems to split(source, "keychain: ")
 		repeat with ki in keychainItems
@@ -152,8 +151,10 @@ on PasswordItemsFromKeychainDump(source)
 				set rec to the rest of split(ki, "attributes:") as text
 				set label to extract(rec, "0x00000007")
 				set account to extract(rec, "acct")
+				set creationDate to extract(rec, "cdat")
+				set modificationDate to extract(rec, "mdat")
 				set thePassword to extract(rec, "data")
-				set the end of passwordItems to {label, account, thePassword}
+				set the end of passwordItems to {label, account, thePassword, creationDate, modificationDate}
 			end if
 		end repeat
 		return my passwordItems
@@ -180,11 +181,11 @@ on PasswordItemsFromKeychainDump(source)
 		on fieldtype(field)
 			if field starts with "0x" or field is in {"acct", "atyp", "data", "desc", "gena", "icmt", "path", "prot", "sdmn", "srvr", "svce"} then
 				"blob"
-			else if field in {"cdat", "mdat"} then
+			else if field is in {"cdat", "mdat"} then
 				"timedate"
-			else if field in {"crtr", "ptcl", "type"} then
+			else if field is in {"crtr", "ptcl", "type"} then
 				"uint32"
-			else if field in {"cusi", "invi", "nega", "scrp"} then
+			else if field is in {"cusi", "invi", "nega", "scrp"} then
 				"sint32"
 			else
 				missing value
@@ -195,10 +196,6 @@ on PasswordItemsFromKeychainDump(source)
 			exprif(x is "<NULL>", "", unquote(x))
 		end cleanup
 		
-		-- Decodes a hexadecimal string (e.g., "0x1BC" returns "444").
-		-- The type field is used to determine whether the hexadecimal value
-		-- must be interpreted as a UTF8 string or as an integer.
-		-- The type of the return value is text in any case.
 		on decode(x, type)
 			set hexdata to text 3 thru -1 of x -- Get rid of "0x"
 			if type is in {"blob", "timedate"} then
@@ -209,6 +206,7 @@ on PasswordItemsFromKeychainDump(source)
 				error "Cannot decode the given data type: " & type
 			end if
 		end decode
+		
 	end script
 	run Parser
 end PasswordItemsFromKeychainDump
