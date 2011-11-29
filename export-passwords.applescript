@@ -163,8 +163,8 @@ on PasswordItemsFromKeychainDump(source)
 				else -- internet password
 					set server to extract(rec, "srvr")
 					set protocol to extract(rec, "ptcl") -- This is either a four-letter code or 0x00000000
-					if protocol is not in {"", "0"} then
-						set protocol to protocol & "://"
+					if protocol is not "0" then
+						set protocol to decodeProtocol(protocol) & "://"
 					else
 						set protocol to ""
 					end if
@@ -228,6 +228,25 @@ on PasswordItemsFromKeychainDump(source)
 			end if
 		end decode
 		
+		
+		-- Returns the protocol scheme for the given four-letter code.
+		-- Note: we decode only the most common protocols. The full list of protocol codes is as follows:
+		-- 'ftp ', 'ftpa', 'http', 'irc ', 'nntp', 'pop3', 'smtp', 'sox ', 'imap', 'ldap', 'atlk', 'afp ', 'teln', 'ssh ',
+		-- 'ftps', 'htps', 'htpx', 'htsx', 'ftpx', 'cifs', 'smb ', 'rtsp', 'rtsx', 'daap', 'eppc', 'ipp ', 'ntps', 'ldps',
+		-- 'tels', 'imps', 'ircs', 'pops', 'cvsp', 'svn ', '0'. ('0' stands for 'any protocol'.)
+		on decodeProtocol(p)
+			if p ends with " " then -- e.g., 'ftp '
+				text 1 thru 3 of p
+			else if p is "htps" then
+				"https"
+			else if p is "pop3" then
+				"pop"
+			else if p is "teln" then
+				"telnet"
+			else
+				p
+			end if
+		end decodeProtocol
 	end script
 	run Parser
 end PasswordItemsFromKeychainDump
