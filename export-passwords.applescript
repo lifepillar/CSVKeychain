@@ -345,10 +345,14 @@ end textBetween
 
 -- Returns a CSV text from a list of (homogeneous) lists.
 on toCSV(listOfLists)
+	set NL to string id 10
 	set {tid, AppleScript's text item delimiters} to {AppleScript's text item delimiters, quote & ";" & quote}
 	set csv to ""
 	repeat with rec in listOfLists
-		set csv to csv & quote & (rec as text) & quote & return
+		repeat with i from 1 to count rec -- Escape quotes
+			set item i of rec to replace(item i of rec, quote, quote & quote)
+		end repeat
+		set csv to csv & quote & (rec as text) & quote & NL
 	end repeat
 	set AppleScript's text item delimiters to tid
 	csv
