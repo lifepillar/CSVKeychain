@@ -118,7 +118,7 @@ end allowSecurityAccess
 on writeFile(thePosixPath, theData)
 	set fd to open for access POSIX file thePosixPath with write permission
 	try
-		write theData to fd as «class utf8»
+		write theData to fd as Çclass utf8È
 	on error errMsg number errNum
 		close access fd -- Ensure that the file descriptor is released
 		error errMsg number errNum
