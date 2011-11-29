@@ -2,6 +2,7 @@ property VOLNAME : "Passwords" -- Name of the encrypted disk image that will con
 property DISKDIR : path to documents folder from user domain as alias without folder creation
 property DISKSIZE : 40 -- Disk image size in MB
 property EXPORT_SECURE_NOTES : true
+property CSV_SEPARATOR : ";"
 
 try
 	exportKeychain()
@@ -25,7 +26,7 @@ on exportKeychain()
 	unlockKeychain(keychainPath)
 	set rawData to dumpKeychainWithPasswords(keychainPath, keychainDump)
 	set passwordItems to PasswordItemsFromKeychainDump(rawData)
-	writeFile(keychainCSV, toCSV(passwordItems))
+	writeFile(keychainCSV, toCSV(passwordItems, CSV_SEPARATOR))
 end exportKeychain
 
 on importKeychain(csv)
@@ -344,9 +345,9 @@ on textBetween(theText, leftDelim, rightDelim)
 end textBetween
 
 -- Returns a CSV text from a list of (homogeneous) lists.
-on toCSV(listOfLists)
+on toCSV(listOfLists, separator)
 	set NL to string id 10
-	set {tid, AppleScript's text item delimiters} to {AppleScript's text item delimiters, quote & ";" & quote}
+	set {tid, AppleScript's text item delimiters} to {AppleScript's text item delimiters, quote & separator & quote}
 	set csv to ""
 	repeat with rec in listOfLists
 		repeat with i from 1 to count rec -- Escape quotes
