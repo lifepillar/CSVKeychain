@@ -92,7 +92,7 @@ on dumpKeychainWithPasswords(theKeychain, dumpPath)
 	repeat
 		try
 			allowSecurityAccess()
-			delay 0.1 -- Wait for the next SecurityAgent process
+			delay 0.2 -- Wait for the next SecurityAgent process
 		on error
 			try -- to wait a bit if security is still running
 				do shell script "ps -x -o comm | grep security" -- Exit code 1 if grep fails to match
@@ -143,18 +143,39 @@ end PasswordItemsFromCSV
 
 on PasswordItemsFromKeychainDump(source)
 	script Parser
-		property passwordItems : {{"Label", "Account", "Password", "Created", "Modified"}} -- Header
+		property passwordItems : {{"Where", "Account", "Password", "Name", "Comments", "Created", "Modified", "Kind", "Type", "Domain", "Auth Type"}} -- Header
 		
 		set keychainItems to split(source, "keychain: ")
 		repeat with ki in keychainItems
-			if ki contains "class: \"genp\"" then
+			if ki contains "class: \"genp\"" or ki contains "class: \"inet\"" then
 				set rec to the rest of split(ki, "attributes:") as text
 				set label to extract(rec, "0x00000007")
 				set account to extract(rec, "acct")
+				set passwd to extract(rec, "data")
+				set comment to extract(rec, "icmt")
 				set creationDate to extract(rec, "cdat")
 				set modificationDate to extract(rec, "mdat")
-				set thePassword to extract(rec, "data")
-				set the end of passwordItems to {label, account, thePassword, creationDate, modificationDate}
+				set descr to extract(rec, "desc")
+				set type to extract(rec, "type")
+				if ki contains "class: \"genp\"" then
+					set service to extract(rec, "svce")
+					set {domain, authtype} to {"", ""} -- Not meaningful for generic passwords
+				else -- internet password
+					set server to extract(rec, "srvr")
+					set protocol to extract(rec, "ptcl") -- This is either a four-letter code or 0x00000000
+					if protocol is not in {"", "0"} then
+						set protocol to protocol & "://"
+					else
+						set protocol to ""
+					end if
+					set thePort to extract(rec, "port")
+					if thePort is not "" then set thePort to ":" & thePort
+					set service to protocol & server & thePort
+					set domain to extract(rec, "sdmn")
+					set authtype to extract(rec, "atyp")
+				end if
+				set the end of passwordItems to Â
+					{service, account, passwd, label, comment, creationDate, modificationDate, descr, type, domain, authtype}
 			end if
 		end repeat
 		return my passwordItems
