@@ -253,6 +253,16 @@ on PasswordItemsFromKeychainDump(source)
 				p
 			end if
 		end decodeProtocol
+		
+		on decodeNote(secureNote)
+			if secureNote starts with "<?xml version=" then
+				tell application "System Events" to get the value of (make new property list item with data secureNote)
+				|note| of result
+			else
+				secureNote
+			end if
+		end decodeNote
+		
 	end script
 	run Parser
 end PasswordItemsFromKeychainDump
