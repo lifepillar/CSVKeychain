@@ -49,7 +49,7 @@
 		in Keychain Access is the <em>Where</em> field.
 
 	@version 2.0.0
-	@copyright 2011Ð2017 Lifepillar
+	@copyright 2011-2017 Lifepillar
 	@charset utf-8
 *)
 
