@@ -53,6 +53,14 @@
 	@charset utf-8
 *)
 
+(*! @abstract <em>[text]</em> This script's name. *)
+property name : "CSVKeychain"
+
+(*! @abstract <em>[text]</em> This script's version. *)
+property version : "2.0.0"
+
+(*! @abstract <em>[text]</em> This script's id. *)
+property id : "me.lifepillar.CSVKeychain"
 
 (*! The names of a password item's fields. *)
 property FIELDS : ({"Where", "Account", "Password", "Label", "Comment", "Created", "Modified", "Kind", "Type", "Domain", "AuthType", "Class", "Creator"})
