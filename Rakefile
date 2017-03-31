@@ -19,12 +19,12 @@ end
 desc "Build project."
 task :build do
 	app = 'KeychainCSV.app'
-	sh "osacompile -x -o '#{app}' 'keychain-csv.applescript'"
+	sh "osacompile -x -o '#{app}' 'CSVKeychain.applescript'"
 end
 
 desc "Build the documentation using HeaderDoc"
 task :doc do
 	# Set LANG to get rid of warnings about missing default encoding
-	sh "env LANG=en_US.UTF-8 headerdoc2html -q -o Documentation keychain-csv.applescript"
+	sh "env LANG=en_US.UTF-8 headerdoc2html -q -o Documentation CSVKeychain.applescript"
 	sh "env LANG=en_US.UTF-8 gatherheaderdoc Documentation"
 end
