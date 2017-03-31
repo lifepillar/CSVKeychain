@@ -27,9 +27,9 @@ The script makes a backup of your keychain before importing or exporting data.
 Backups are timestamped and saved into the same folder containing the keychain.
 In any case, it is a good idea to keep a separate backup, just in case.
 
-When importing items into a keychain, existing items are overwritten if their
-timestamps are older than the timestamps of the item being imported. When
-timestamps are not available, items are duplicated.
+When importing items into a keychain, corresponding existing items are
+overwritten if their timestamps are older than the timestamps of the item being
+imported. When timestamps are not available, items are duplicated.
 
 
 ## License
