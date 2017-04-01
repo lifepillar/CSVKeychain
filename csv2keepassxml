@@ -33,39 +33,35 @@ def base64_uuid
 end
 
 def password_item(record, coder)
-  { :username => coder.encode(record[ACCOUNT]),
-    :password => coder.encode(record[PASSWORD]),
-    :title    => coder.encode(record[LABEL]),
-    :url      => coder.encode(record[WHERE]),
-    :comment  => coder.encode(record[COMMENT]) }
+  item = { 'UserName' => coder.encode(record[ACCOUNT]),
+           'Title'    => coder.encode(record[LABEL]),
+           'URL'      => coder.encode(record[WHERE])}
+  pwd = coder.encode(record[PASSWORD])
+  if pwd.length > 65536
+    puts "Warning: password longer than 65536 characters will be stored as a note."
+    return item.merge!(:comment => pwd)
+  end
+  return item.merge!( {'Password' => pwd, 'Notes'  => coder.encode(record[COMMENT]) } )
 end
 
-def entry(record, coder)
-  <<HERE
+def entry(record)
+ s = <<HERE
     <Entry>
       <UUID>#{base64_uuid()}</UUID>
-      <String>
-        <Key>Title</Key>
-        <Value>#{record[:title]}</Value>
-      </String>
-      <String>
-        <Key>UserName</Key>
-        <Value>#{record[:username]}</Value>
-      </String>
-      <String>
-        <Key>Password</Key>
-        <Value ProtectInMemory="True">#{record[:password]}</Value>
-      </String>
-      <String>
-        <Key>URL</Key>
-        <Value>#{record[:url]}</Value>
-      </String>
-      <String>
-        <Key>Notes</Key>
-        <Value>#{record[:comment]}</Value>
-      </String>
-    </Entry>
 HERE
+  record.each do |k,v|
+    if v.nil? or v.empty?
+      next
+    end
+    s += <<HERE
+      <String>
+        <Key>#{k}</Key>
+        <Value>#{v}</Value>
+      </String>
+HERE
+  end
+  s += '    </Entry>'
+  return s
 end
 
 input_file = nil
@@ -118,17 +114,17 @@ coder = HTMLEntities.new
 items = []
 CSV.foreach(input_file, :headers => true) do |row|
   if row[KIND] =~ /secure\s+note/i or row[TYPE] == 'note'
-    items << { :group => 'Notes',
-               :title => coder.encode(row[LABEL]),
-               :note  => coder.encode(row[PASSWORD]) }
+    items << { 'Group' => 'Notes',
+               'Title' => coder.encode(row[LABEL]),
+               'Notes' => coder.encode(row[PASSWORD]) }
   elsif row[KIND] =~ /network|802\.1|airport|handoff|sharing/i or row[WHERE] =~ /^.?(afp|ftp|smb|ssh|teln|vnc)/i
-    items << password_item(row, coder).merge!({ :group => 'Network' })
+    items << password_item(row, coder).merge!({ 'Group' => 'Network' })
   elsif row[CLASS] == 'inet' and row[WHERE] =~ /^.?(pop|smtp|imap|mail)/i
-    items << password_item(row, coder).merge!({ :group => 'EMail' })
+    items << password_item(row, coder).merge!({ 'Group' => 'EMail' })
   elsif row[WHERE] =~ /:\/\//
-    items << password_item(row, coder).merge!({ :group => 'Internet' })
+    items << password_item(row, coder).merge!({ 'Group' => 'Internet' })
   else
-    items << password_item(row, coder).merge!({ :group => nil })
+    items << password_item(row, coder).merge!({ 'Group' => nil })
   end
 end
 
@@ -144,34 +140,34 @@ File.open(output_file, 'w') do |f|
   f.puts "    <UUID>#{base64_uuid()}</UUID>"
   f.puts "    <Name>General</Name>"
   f.puts '    <Notes />'
-  items.select { |i| i[:group].nil? }.each do |record|
-    f.puts entry(record, coder)
+  items.select { |i| i['Group'].nil? }.each do |record|
+    f.puts entry(record)
   end
   ['Network', 'EMail', 'Internet'].each do |group|
     f.puts '    <Group>'
     f.puts "      <UUID>#{base64_uuid()}</UUID>"
     f.puts "      <Name>#{group}</Name>"
-    items.select { |i| i[:group] == group }.each do |record|
-      f.puts entry(record, coder)
+    items.select { |i| i['Group'] == group }.each do |record|
+      f.puts entry(record)
     end
     f.puts '    </Group>'
   end
-  items.select { |i| i[:group] == 'Notes' }.each do |record|
+  items.select { |i| i['Group'] == 'Notes' }.each do |record|
     f.puts '    <Group>'
     f.puts "      <UUID>#{base64_uuid()}</UUID>"
     f.puts "      <Name>Notes</Name>"
     f.puts '      <IconID>21</IconID>'
-    items.select { |i| i[:group] == 'Notes' }.each do |record|
+    items.select { |i| i['Group'] == 'Notes' }.each do |record|
       f.puts '      <Entry>'
       f.puts "        <UUID>#{base64_uuid()}</UUID>"
       f.puts '        <IconID>21</IconID>'
       f.puts '        <String>'
       f.puts '          <Key>Title</Key>'
-      f.puts "          <Value>#{record[:title]}</Value>"
+      f.puts "          <Value>#{record['Title']}</Value>"
       f.puts '        </String>'
       f.puts '        <String>'
       f.puts '          <Key>Notes</Key>'
-      f.puts "          <Value ProtectInMemory=\"True\">#{record[:note]}</Value>"
+      f.puts "          <Value ProtectInMemory=\"True\">#{record['Notes']}</Value>"
       f.puts '        </String>'
       f.puts '      </Entry>'
     end
