@@ -43,14 +43,6 @@ using the included `add_category.rb` script. Then, use my
 [csv2keepassxml](https://github.com/lifepillar/csv2keepassxml) to generate
 a KeePass 2 XML file.
 
-At the time of this writing, as far as I know the only app on macOS that can
-import XML files into a KeePass database is [KeeWeb](https://keeweb.info).
-[MacPass](https://github.com/mstarke/MacPass) has an XML import feature under
-development.
-
-If you know about a macOS KeePass app importing CSV directly, please let me
-know!
-
 
 ## License
 
