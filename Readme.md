@@ -28,7 +28,7 @@ Backups are timestamped and saved into the same folder containing the keychain.
 In any case, it is a good idea to keep a separate backup, just in case.
 
 When importing items into a keychain, matching items in the keychain are
-overwritten if their timestamps are older than the timestamps of the item being
+overwritten if their timestamps are older than the timestamps of the items being
 imported. If a keychain's item has no timestamp, then the item is duplicated. If
 there are items without timestamps in the CSV file, the script asks the user
 what to do.
