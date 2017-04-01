@@ -115,10 +115,6 @@ end try
 
 set info to action & " operation completed successfully!"
 
-if action is "Import" then
-	set info to info & return & return & "It is recommended that you verify your keychain by choosing Keychain Access > Keychain First Aid."
-end if
-
 activate
 display dialog info buttons {"Quit"} default button 1 with title "Success!" with icon note
 
