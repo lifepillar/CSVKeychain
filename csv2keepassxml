@@ -1,0 +1,183 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+# Convert a CSV file exported by CSVKeychain.applescript into a KeePass 2 XML file.
+# In macOS, you may use KeeWeb to import the XML file into a KeePass database.
+
+require 'base64'
+require 'csv'
+require 'htmlentities'
+require 'securerandom'
+
+VERSION = '0.0.1'
+
+def help; <<-HELP
+Usage: csv2keepassxml <path to CSV file>
+Options:
+    -d, --dbname                     Database name.
+    -h, --help                       Show this help message and exit.
+    -v, --version                    Print version and exit.
+HELP
+end
+
+# See https://sourceforge.net/p/keepass/discussion/329220/thread/6d1d20a8/
+def poor_man_keepass_uuid
+  p = SecureRandom.uuid
+  p[15] = '4'
+  p[20] = ['8', '9', 'a', 'b'][rand(4)]
+  p
+end
+
+def base64_uuid
+  Base64.urlsafe_encode64(poor_man_keepass_uuid, padding: true)
+end
+
+def password_item(record, coder)
+  { :username => coder.encode(record[ACCOUNT]),
+    :password => coder.encode(record[PASSWORD]),
+    :title    => coder.encode(record[LABEL]),
+    :url      => coder.encode(record[WHERE]),
+    :comment  => coder.encode(record[COMMENT]) }
+end
+
+def entry(record, coder)
+  <<HERE
+    <Entry>
+      <UUID>#{base64_uuid()}</UUID>
+      <String>
+        <Key>Title</Key>
+        <Value>#{record[:title]}</Value>
+      </String>
+      <String>
+        <Key>UserName</Key>
+        <Value>#{record[:username]}</Value>
+      </String>
+      <String>
+        <Key>Password</Key>
+        <Value ProtectInMemory="True">#{record[:password]}</Value>
+      </String>
+      <String>
+        <Key>URL</Key>
+        <Value>#{record[:url]}</Value>
+      </String>
+      <String>
+        <Key>Notes</Key>
+        <Value>#{record[:comment]}</Value>
+      </String>
+    </Entry>
+HERE
+end
+
+input_file = nil
+dbname = nil
+n = ARGV.length
+i = 0
+while i < n
+  case ARGV[i]
+  when /^(-v|--version)$/
+    puts VERSION
+    exit(0)
+  when /^(-d|--dbname)$/
+    i += 1
+    if i < n
+      dbname = ARGV[i]
+    else
+      puts help
+      exit(1)
+    end
+  else # Assume it is a path
+    input_file = File.expand_path(ARGV[i])
+  end
+  i += 1
+end
+
+if input_file.nil?
+  puts help
+  exit(1)
+end
+
+output_file = File.join(File.dirname(input_file), File.basename(input_file, '.csv') + '.xml')
+dbname = 'NewDatabase' if dbname.nil?
+
+WHERE    = 0
+ACCOUNT  = 1
+PASSWORD = 2
+LABEL    = 3
+COMMENT  = 4
+CREATED  = 5
+MODIFIED = 6
+KIND     = 7
+TYPE     = 8
+DOMAIN   = 9
+AUTHTYPE = 10
+CLASS    = 11
+CREATOR  = 12
+
+coder = HTMLEntities.new
+
+items = []
+CSV.foreach(input_file, :headers => true) do |row|
+  if row[KIND] =~ /secure\s+note/i or row[TYPE] == 'note'
+    items << { :group => 'Notes',
+               :title => coder.encode(row[LABEL]),
+               :note  => coder.encode(row[PASSWORD]) }
+  elsif row[KIND] =~ /network|802\.1|airport|handoff|sharing/i or row[WHERE] =~ /^.?(afp|ftp|smb|ssh|teln|vnc)/i
+    items << password_item(row, coder).merge!({ :group => 'Network' })
+  elsif row[CLASS] == 'inet' and row[WHERE] =~ /^.?(pop|smtp|imap|mail)/i
+    items << password_item(row, coder).merge!({ :group => 'EMail' })
+  elsif row[WHERE] =~ /:\/\//
+    items << password_item(row, coder).merge!({ :group => 'Internet' })
+  else
+    items << password_item(row, coder).merge!({ :group => nil })
+  end
+end
+
+File.open(output_file, 'w') do |f|
+  f.puts '<?xml version="1.0" encoding="utf-8" standalone="yes"?>'
+  f.puts '<KeePassFile>'
+  f.puts '<Meta>'
+  f.puts '  <Generator>csv2keepassxml.rb</Generator>'
+  f.puts "    <DatabaseName>#{dbname}</DatabaseName>"
+  f.puts '</Meta>'
+  f.puts '<Root>'
+  f.puts '  <Group>'
+  f.puts "    <UUID>#{base64_uuid()}</UUID>"
+  f.puts "    <Name>General</Name>"
+  f.puts '    <Notes />'
+  items.select { |i| i[:group].nil? }.each do |record|
+    f.puts entry(record, coder)
+  end
+  ['Network', 'EMail', 'Internet'].each do |group|
+    f.puts '    <Group>'
+    f.puts "      <UUID>#{base64_uuid()}</UUID>"
+    f.puts "      <Name>#{group}</Name>"
+    items.select { |i| i[:group] == group }.each do |record|
+      f.puts entry(record, coder)
+    end
+    f.puts '    </Group>'
+  end
+  items.select { |i| i[:group] == 'Notes' }.each do |record|
+    f.puts '    <Group>'
+    f.puts "      <UUID>#{base64_uuid()}</UUID>"
+    f.puts "      <Name>Notes</Name>"
+    f.puts '      <IconID>21</IconID>'
+    items.select { |i| i[:group] == 'Notes' }.each do |record|
+      f.puts '      <Entry>'
+      f.puts "        <UUID>#{base64_uuid()}</UUID>"
+      f.puts '        <IconID>21</IconID>'
+      f.puts '        <String>'
+      f.puts '          <Key>Title</Key>'
+      f.puts "          <Value>#{record[:title]}</Value>"
+      f.puts '        </String>'
+      f.puts '        <String>'
+      f.puts '          <Key>Notes</Key>'
+      f.puts "          <Value ProtectInMemory=\"True\">#{record[:note]}</Value>"
+      f.puts '        </String>'
+      f.puts '      </Entry>'
+    end
+    f.puts '    </Group>'
+  end
+  f.puts   '</Group>'
+  f.puts '</Root>'
+  f.puts '</KeePassFile>'
+end

@@ -2,7 +2,8 @@
 
 This script allows you to export all your password items and secure notes from
 Apple's Keychain.app into a plain text file in CSV format, and it allows you to
-import CSV files back into a keychain.
+import CSV files back into a keychain. The resulting CSV can be converted into
+a KeePass XML file using an included script.
 
 The script does not use any trick or reverse engineering: it just uses Apple's
 `security` tool and takes advantage of macOS's assistive support.
