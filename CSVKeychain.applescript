@@ -191,7 +191,7 @@ on importCSV()
 	
 	set csvData to readUTF8File(csvPath)
 	
-	set csvPasswordItems to PasswordItemsFromCSV(csvData, CSV_SEPARATOR)
+	set csvPasswordItems to PasswordItemsFromCSV(csvData, ",")
 	
 	unlockKeychain(keychainPath)
 	
