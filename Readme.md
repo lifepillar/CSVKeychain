@@ -77,7 +77,14 @@ tell application "System Events"
 end tell
 ```
 
-You may run this directly from Script Editor.
+You may run this directly from Script Editor. A similar approach can be used to
+export `/Library/Keychains/System.keychain`.
+
+**Note:** Keychain.app won't allow you to paste some items (most likely,
+automatically created by the system, not yours). In such case, the snippet above
+will produce a script error and Keychain.app will show an error dialog, too.
+Dismiss both and run the script again. Repeat every time you get an error.
+
 
 ## Migrate passwords and notes into KeePass
 
