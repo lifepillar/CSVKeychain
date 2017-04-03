@@ -77,6 +77,7 @@ tell application "System Events"
 end tell
 ```
 
+You may run this directly from Script Editor.
 
 ## Migrate passwords and notes into KeePass
 
