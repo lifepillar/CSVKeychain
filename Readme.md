@@ -1,18 +1,19 @@
 # CSVKeychain AppleScript script
 
-This script allows you to export all your password items and secure notes from
-Apple's Keychain.app into a plain text file in CSV format, and it allows you to
-import CSV files back into a keychain.
+This repo contains scripts to export all your password items and secure notes
+from Apple's Keychain.app into plain text files in CSV format, merge such files
+and import them back into a keychain.
 
-The script does not use any trick or reverse engineering: it just uses Apple's
-`security` tool and takes advantage of macOS's assistive support.
+No trick or reverse engineering is used: exporting is performed by Apple's
+`security` tool, using macOS's assistive support to streamline the process.
 
 Tested in macOS Sierra. Earlier versions of macOS/OS X are not supported.
 
 
 ## How to use
 
-You may run the script from source. Just open it in Script Editor.
+To import/export password items, open the AppleScript script in Script Editor.
+The script may be run from source.
 
 Before running the script, go to System Preferences > Security & Privacy >
 Accessibility, and allow Script Editor to control your computer. This step is
@@ -23,27 +24,33 @@ such dialogs for you.
 You may also build the script into an application if you want. In this case, you
 must grant the app control of your computer in the same way.
 
-The script makes a backup of your keychain before importing or exporting data.
+The script makes a backup of the keychain before importing or exporting data.
 Backups are timestamped and saved into the same folder containing the keychain.
 In any case, it is a good idea to keep a separate backup, just in case.
 
-When importing items into a keychain, *matching items in the keychain are
-overwritten if their timestamps are older than the timestamps of the items being
-imported.* If there are items without timestamps in the CSV file, the script
-will ask the user what to do with them. Note that this will be asked once and
-the choice applied to all the items being imported.
+When importing items into a keychain, *matching items already present in the
+keychain are overwritten if their timestamps are older than the timestamps of
+the items being imported.* If there are items without timestamps in the CSV
+file, the script will ask the user what to do with them. Note that this will be
+asked once and the choice applied to all the items being imported.
 
 Also note that *all* new or updated items are assigned the current time as their
 new timestamps. There is no possibility to retain the original timestamps from
 the CSV file.
 
-**Note:** currently, access control lists are not exported.
+Finally, access control lists are not exported.
+
+
+## Merging files
+
+A Ruby script is provided to merge two CSV files containing password data into
+one. See `./merge_csv.rb --help` for the details.
 
 
 ## Is it possible to export the Local Items (aka iCloud) keychain?
 
 Not directly. The Local Items keychain, located at
-`~/Library/Keychain/<UUID>/<name>.db`, is a SQLite3 database containing
+`~/Library/Keychain/<UUID>/<name>.db`, is a SQLite database containing
 obfuscated data, so its format is different from the format of a standard
 keychain. As far as I can see, `security` cannot dump such keychains, and I do
 not know of any tool that would do that.
