@@ -41,6 +41,7 @@ end
 
 outfile = options.fetch(:out, File.join(File.dirname(input_file), File.basename(input_file, '.csv') + '-out.csv'))
 out = CSV.open(outfile, "wb")
+out << ["Where","Account","Password","Label","Comment","Created","Modified","Kind","Type","Domain","AuthType","Class","Creator","Category"]
 
 CSV.foreach(input_file, :headers => true) do |row|
   if row[KIND] =~ /secure\s+note/i or row[TYPE] == 'note'
