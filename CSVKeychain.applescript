@@ -268,10 +268,10 @@ on toKeychain(keychain, csvPasswordItems)
 				display dialog Â
 					"Among the items to be imported, some do not have the Òlast modifiedÓ timestamp, " & Â
 					"so I cannot determine whether they are newer than a corresponding item in the keychain. " & Â
-					"What should I do with such items when they match an item in the keychain?" buttons {"Skip Items", "Update Keychain"} Â
+					"What should I do with such items when they match an item in the keychain?" buttons {"Skip Items", "Overwrite"} Â
 					default button "Skip Items" with icon note
 				
-				if the button returned of the result is "Update Keychain" then
+				if the button returned of the result is "Overwrite" then
 					set override to true
 				end if
 				
