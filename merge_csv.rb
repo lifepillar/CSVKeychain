@@ -157,6 +157,7 @@ j = 1 # Ditto
 m = csv1.length
 n = csv2.length
 p = [m,n].min
+matching = 0
 while i < p
   r1 = csv1[i]
   r2 = csv2[j]
@@ -168,6 +169,7 @@ while i < p
     out << r2
     j += 1
   when 0 # Matching items
+    matching += 1
     if options.fetch(:keep, false)
       out << r1
       out << r2
@@ -205,3 +207,4 @@ end
 
 out.close
 puts "Done!"
+puts "Found #{matching} matching item(s)."
