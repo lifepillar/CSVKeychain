@@ -27,17 +27,15 @@ The script makes a backup of your keychain before importing or exporting data.
 Backups are timestamped and saved into the same folder containing the keychain.
 In any case, it is a good idea to keep a separate backup, just in case.
 
-When importing items into a keychain, matching items in the keychain are
+When importing items into a keychain, *matching items in the keychain are
 overwritten if their timestamps are older than the timestamps of the items being
-imported. If a keychain's item has no timestamp, then the item is duplicated. If
-there are items without timestamps in the CSV file, the script asks the user
-what to do.
+imported.* If there are items without timestamps in the CSV file, the script
+will ask the user what to do with them. Note that this will be asked once and
+the choice applied to all the items being imported.
 
-You may use this script to merge two or more keychains:
-
-1. Export each keychain, one at a time.
-2. Open Keychain.app and create a new keychain.
-3. Import each exported CSV file, one at a time, into the new keychain.
+Also note that *all* new or updated items are assigned the current time as their
+new timestamps. There is no possibility to retain the original timestamps from
+the CSV file.
 
 **Note:** currently, access control lists are not exported.
 
