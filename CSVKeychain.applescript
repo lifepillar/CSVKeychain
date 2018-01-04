@@ -179,12 +179,11 @@ end exportKeychain
 		ÒUser cancelledÓ error if the user interrupts the process.
 *)
 on importCSV()
-	
-	set {keychainName, keychainPath} to Â
-		chooseFile("Please select the keychain to import items into:", "com.apple.keychain", path to keychain folder from user domain)
-	
 	set {csvName, csvPath} to Â
 		chooseFile("Please select the CSV file to be imported:", "public.comma-separated-values-text", path to home folder from user domain)
+		
+	set {keychainName, keychainPath} to Â
+		chooseFile("Please select the keychain to import items into:", "com.apple.keychain", path to keychain folder from user domain)
 	
 	do shell script Â
 		"ditto " & quoted form of POSIX path of keychainPath & " " & quoted form of (POSIX path of keychainPath & "-" & timestamp() & ".backup")
