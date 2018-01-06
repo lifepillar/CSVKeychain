@@ -181,7 +181,7 @@ end exportKeychain
 on importCSV()
 	set {csvName, csvPath} to Â
 		chooseFile("Please select the CSV file to be imported:", "public.comma-separated-values-text", path to home folder from user domain)
-		
+	
 	set {keychainName, keychainPath} to Â
 		chooseFile("Please select the keychain to import items into:", "com.apple.keychain", path to keychain folder from user domain)
 	
@@ -545,7 +545,7 @@ on addInternetPassword(update, keychain, account, server, |path|, |port|, protoc
 	set options to ""
 	
 	if label is "" then
-		set options to options & " -l " & ansiQuoted(service)
+		set options to options & " -l " & ansiQuoted(server)
 	else
 		set options to options & " -l " & ansiQuoted(label)
 	end if
