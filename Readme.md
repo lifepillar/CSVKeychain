@@ -7,7 +7,8 @@ and import them back into a keychain.
 No trick or reverse engineering is used: exporting is performed by Apple's
 `security` tool, using macOS's assistive support to streamline the process.
 
-Tested in macOS Sierra. Earlier versions of macOS/OS X are not supported.
+The current master should work in (High) Sierra.
+Earlier versions of macOS/OS X are not supported.
 
 
 ## How to use
@@ -16,13 +17,24 @@ To import/export password items, open the AppleScript script in Script Editor.
 The script may be run from source.
 
 Before running the script, go to System Preferences > Security & Privacy >
-Accessibility, and allow Script Editor to control your computer. This step is
+Privacy > Accessibility, and allow Script Editor to control your computer.
+This step is
 required to avoid SecurityAgent to prompt you with a dialog for each item you
 want to export. It basically allows AppleScript to press the Allow button in
 such dialogs for you.
 
 You may also build the script into an application if you want. In this case, you
 must grant the app control of your computer in the same way.
+
+The script always asks for the password to unlock your keychain (you recognise
+the dialog by the AppleScript Script icon). Since that dialog is not very
+secure, it is recommended that you change your keychain's password in
+Keychain.app before exporting your keychain, and restore the original password
+afterwards. You may also be asked to unlock your keychain by SecurityAgent
+(which you do by providing your keychain's password). So, you may have to enter
+your keychain's password once or twice. After that, SecurityAgent will keep
+prompting for a password for each exported item, but the script should fill it
+out for you automatically, so no further action from you will be required.
 
 The script makes a backup of the keychain before importing or exporting data.
 Backups are timestamped and saved into the same folder containing the keychain.
@@ -40,6 +52,20 @@ the CSV file.
 
 Finally, access control lists are not exported.
 
+
+## Troubleshooting
+
+If you get this error:
+
+```
+This script will be terminated prematurely because the following error has
+occurred:
+
+security: SecKeychainUnlock [...]: The user name or
+passphrase you entered is not correct. (Error number: 51)
+```
+
+open Keychain.app and lock your keychain. Then, run the script again.
 
 ## Merging files
 

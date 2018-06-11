@@ -623,34 +623,20 @@ end dumpKeychainWithoutPasswords
 *)
 on dumpKeychainWithPasswords(keychain, dumpPath, mode)
 	
+	display dialog Â
+		"Type password to unlock keychain items" default answer "" buttons {"Cancel", "OK"} default button "OK" cancel button "Cancel" with title "Set password" with icon note with hidden answer
+	
+	set thePassword to the text returned of the result
+	
 	-- Run security in the background and redirect the output to a file
 	-- TODO: DUMP ACLs?
+
 	do shell script Â
 		"security -q dump-keychain -d " & quoted form of POSIX path of the keychain & " &>" & quoted form of dumpPath & " &"
 	
 	delay 0.5 -- Wait a bit for SecurityAgent to start
 	
-	repeat
-		
-		try
-			
-			allowSecurityAccess(mode)
-			delay 0.2 -- Wait for the next SecurityAgent process
-			
-		on error
-			
-			try -- to wait a bit if security is still running
-				
-				do shell script "ps -x -o comm | grep ^security$" -- Exit code 1 if grep fails to match
-				delay 1
-				
-			on error
-				exit repeat
-			end try
-			
-		end try
-		
-	end repeat
+	allowSecurityAccess(thePassword)
 	
 	readUTF8File(dumpPath)
 	
@@ -658,6 +644,7 @@ end dumpKeychainWithPasswords
 
 
 (*!
+
 	@abstract
 		Dismisses a SecurityAgent's dialog by pressing the specified button.
 	@discussion
@@ -671,12 +658,23 @@ end dumpKeychainWithPasswords
 	@throws
 		Nothing.
 *)
-on allowSecurityAccess(mode)
+on allowSecurityAccess(thePassword)
 	
 	tell application "System Events"
-		tell process "SecurityAgent"
-			click button mode of window 1
-		end tell
+		repeat while exists (processes where name is "SecurityAgent")
+			tell process "SecurityAgent"
+				set frontmost to true
+				try
+					keystroke thePassword
+					delay 0.1
+					keystroke return
+					delay 0.1
+				on error
+					-- do nothing to skip the error
+				end try
+			end tell
+			delay 0.5
+		end repeat
 	end tell
 	
 end allowSecurityAccess
