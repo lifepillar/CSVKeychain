@@ -27,7 +27,7 @@ You may also build the script into an application if you want. In this case, you
 must grant the app control of your computer in the same way.
 
 The script always asks for the password to unlock your keychain (you recognise
-the dialog by the AppleScript Script icon). Since that dialog is not very
+the dialog by the Script Editor icon). Since that dialog is not very
 secure, it is recommended that you change your keychain's password in
 Keychain.app before exporting your keychain, and restore the original password
 afterwards. You may also be asked to unlock your keychain by SecurityAgent
