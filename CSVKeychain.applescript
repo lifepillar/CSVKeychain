@@ -49,7 +49,7 @@
 		in Keychain Access is the <em>Where</em> field.
 
 	@version 2.0.0
-	@copyright 2011-2017 Lifepillar
+	@copyright 2011-2018 Lifepillar
 	@charset utf-8
 *)
 
@@ -630,7 +630,7 @@ on dumpKeychainWithPasswords(keychain, dumpPath, mode)
 	
 	-- Run security in the background and redirect the output to a file
 	-- TODO: DUMP ACLs?
-
+	
 	do shell script Â
 		"security -q dump-keychain -d " & quoted form of POSIX path of the keychain & " &>" & quoted form of dumpPath & " &"
 	

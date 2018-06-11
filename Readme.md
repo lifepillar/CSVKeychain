@@ -134,7 +134,7 @@ a KeePass 2 XML file.
 
 ## License
 
-Copyright (c) 2011–2017, Lifepillar
+Copyright (c) 2011–2018, Lifepillar
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
