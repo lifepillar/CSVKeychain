@@ -95,16 +95,21 @@ convenience, the script that allows you to fill in the password prompts for you
 is reported below:
 
 ```applescript
-set keychainPassword to "keychain password"
-
 tell application "System Events"
-    repeat while exists (processes where name is "SecurityAgent")
-        tell process "SecurityAgent"
-            set value of text field 1 of window 1 to keychainPassword
-            click button "OK" of window 1
-        end tell
-        delay 0.2
-    end repeat
+	repeat while exists (processes where name is "SecurityAgent")
+		tell process "SecurityAgent"
+			set frontmost to true
+			try
+				keystroke "PUT YOUR KEYCHAIN'S PASSWORD HERE"
+				delay 0.1
+				keystroke return
+				delay 0.1
+			on error
+				-- do nothing to skip the error
+			end try
+		end tell
+		delay 0.5
+	end repeat
 end tell
 ```
 
