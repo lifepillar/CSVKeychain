@@ -77,10 +77,8 @@ one. See `./merge_csv.rb --help` for the details.
 
 **Note: the workaround described in this section does not appear to work in
 macOS High Sierra or later. You may have better luck with
-[https://discussions.agilebits.com/discussion/comment/455708/#Comment_455708](Get
-passwords from iCloud keychain directly) and
-[https://discussions.agilebits.com/discussion/comment/455305/#Comment_455305](Get
-passwords from Safari).**
+[Get passwords from iCloud keychain directly](https://discussions.agilebits.com/discussion/comment/455708/#Comment_455708)
+and [Get passwords from Safari](https://discussions.agilebits.com/discussion/comment/455305/#Comment_455305).**
 
 Not directly. The Local Items keychain, located at
 `~/Library/Keychains/<UUID>/<name>.db`, is a SQLite database containing
