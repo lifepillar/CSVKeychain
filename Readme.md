@@ -76,7 +76,7 @@ one. See `./merge_csv.rb --help` for the details.
 ## Is it possible to export the Local Items (aka iCloud) keychain?
 
 Not directly. The Local Items keychain, located at
-`~/Library/Keychain/<UUID>/<name>.db`, is a SQLite database containing
+`~/Library/Keychains/<UUID>/<name>.db`, is a SQLite database containing
 obfuscated data, so its format is different from the format of a standard
 keychain. As far as I can see, `security` cannot dump such keychains, and I do
 not know of any tool that would do that.
