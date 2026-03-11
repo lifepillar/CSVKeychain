@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **As of March 11, 2026, this repository is on [Codeberg](https://codeberg.org/lifepillar/CSVKeychain).**
+
 # CSVKeychain AppleScript script
 
 This repo contains scripts to export all your password items and secure notes
